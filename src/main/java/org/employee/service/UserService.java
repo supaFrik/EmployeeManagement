@@ -1,5 +1,6 @@
 package org.employee.service;
 
+import org.employee.dto.UserRegistrationDto;
 import org.employee.entity.Role;
 import org.employee.entity.User;
 import org.employee.repository.UserRepository;
@@ -18,17 +19,17 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    public User registerUser(String email, String password, String firstName, String lastName) {
+    public User registerUser(UserRegistrationDto userRegistrationDto) {
         User user = new User();
-        if(userRepository.existsByEmail(email)) {
+        if(userRepository.existsByEmail(userRegistrationDto.getEmail())) {
             throw new RuntimeException("Email already exists");
         }
-        user.setEmail(email);
+        user.setEmail(userRegistrationDto.getEmail());
 
-        String encodedPassword = passwordEncoder.encode(password);
+        String encodedPassword = passwordEncoder.encode(userRegistrationDto.getPassword());
         user.setPassword(encodedPassword);
-        user.setFirstName(firstName);
-        user.setLastName(lastName);
+        user.setFirstName(userRegistrationDto.getFirstName());
+        user.setLastName(userRegistrationDto.getLastName());
         return userRepository.save(user);
     }
     public Optional<User> getUserByEmail(String email) {
