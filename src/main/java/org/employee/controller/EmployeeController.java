@@ -4,6 +4,7 @@ import org.employee.entity.Employee;
 import org.employee.service.EmployeeService;
 import org.employee.service.EmployeeServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -57,5 +58,26 @@ public class EmployeeController {
     public String deleteEmployee(@PathVariable("id") Long id) {
         employeeService.deleteEmployeeById(id);
         return "redirect:/employees";
+    }
+
+    @GetMapping("/page/{pageNo}")
+    public String page(@PathVariable("pageNo") int pageNo,
+                       @RequestParam("sortField") String sortField,
+                       @RequestParam("sortDir") String sortDir, Model model) {
+        int pageSize = 8;
+        Page<Employee> page = employeeService.findPaginated(pageNo, pageSize, sortField, sortDir);
+        List<Employee> employees = page.getContent();
+
+        model.addAttribute("currentPage", pageNo);
+        model.addAttribute("totalPages", page.getTotalPages());
+        model.addAttribute("totalItems", page.getTotalElements());
+
+        model.addAttribute("sortField", sortField);
+        model.addAttribute("sortDir", sortDir);
+        model.addAttribute("reverseSortDir", sortDir.equals("asc") ? "desc" : "asc");
+
+        model.addAttribute("employees", employees);
+        
+        return  "employee-page";
     }
 }
