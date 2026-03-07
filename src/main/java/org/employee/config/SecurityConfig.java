@@ -1,6 +1,5 @@
 package org.employee.config;
 
-import org.employee.repository.UserRepository;
 import org.employee.service.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
