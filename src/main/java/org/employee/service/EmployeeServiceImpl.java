@@ -13,20 +13,21 @@ import java.util.List;
 
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
+
     @Autowired
     private EmployeeRepository employeeRepository;
 
     @Override
-    public Employee createEmployee(Employee employee) {
-        return employeeRepository.save(employee);
-    }
-
-    @Override
-    public Employee updateEmployee(Employee employee) {
-        if(employeeRepository.findById(employee.getId()).isEmpty()) {
-            throw new RuntimeException("Employee with id " + employee.getId() + " is not found !");
+    public void saveEmployee(Employee employee) {
+        String email = employee.getEmail();
+        if (email != null) {
+            employeeRepository.findByEmail(email).ifPresent(existing -> {
+                if (employee.getId() == null || !existing.getId().equals(employee.getId())) {
+                    throw new IllegalArgumentException("Email already exists");
+                }
+            });
         }
-        return employeeRepository.save(employee);
+        this.employeeRepository.save(employee);
     }
 
     @Override
@@ -34,7 +35,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         if(employeeRepository.findById(id).isEmpty()) {
             throw new RuntimeException("Employee with id " + id + " is not found !");
         }
-        employeeRepository.deleteById(id);
+        this.employeeRepository.deleteById(id);
     }
 
     @Override
@@ -49,9 +50,9 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public Page<Employee> findPaginated(int pageNo, int pageSize, String sortField, String sortDirection) {
-        Sort sort = sortDirection.equalsIgnoreCase(Sort.Direction.ASC.name()) ?
-                Sort.by(sortField).ascending() :
+        Sort sort = sortDirection.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortField).ascending() :
                 Sort.by(sortField).descending();
+
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize, sort);
         return this.employeeRepository.findAll(pageable);
     }

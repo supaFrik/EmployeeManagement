@@ -14,56 +14,51 @@ import java.util.List;
 @Controller
 @RequestMapping("/employees")
 public class EmployeeController {
-    private final EmployeeService employeeService;
 
     @Autowired
-    public EmployeeController(EmployeeService employeeService) {
-        this.employeeService = employeeService;
+    private EmployeeService employeeService;
+
+    @GetMapping("/")
+    public String viewHomePage(Model model) {
+        return findPaginated(1, "firstName", "asc", model);
     }
 
-    @GetMapping
-    public String listEmployee(Model model) {
-        List<Employee> employees = employeeService.getAllEmployees();
-        model.addAttribute("employees", employees);
-        return "employees";
-    }
-
-    @GetMapping("/new")
-    public String newEmployee(Model model) {
+    @GetMapping("/showNewEmployeeForm")
+    public String showNewEmployeeForm(Model model) {
         Employee employee = new Employee();
         model.addAttribute("employee", employee);
-        return "employee-form";
+        return "new_employee";
     }
 
-    @PostMapping
-    public String saveEmployee(@ModelAttribute("employee") Employee employee) {
-        employeeService.createEmployee(employee);
-        return "redirect:/employees";
+    @PostMapping("/saveEmployee")
+    public String saveEmployee(@ModelAttribute("employee") Employee employee, Model model) {
+        try {
+            employeeService.saveEmployee(employee);
+        } catch (IllegalArgumentException ex) {
+            model.addAttribute("employee", employee);
+            model.addAttribute("error", ex.getMessage());
+            return employee.getId() == null ? "new_employee" : "update_employee";
+        }
+        return "redirect:/employees/";
     }
 
-    @GetMapping("/edit/{id}")
-    public String editEmployee(@PathVariable("id") Long id, Model model) {
+    @GetMapping("/showFormForUpdate/{id}")
+    public String updateEmployee(@PathVariable(value = "id") Long id, Model model) {
         Employee employee = employeeService.getEmployeeById(id);
         model.addAttribute("employee", employee);
-        return "employee-edit";
+        return "update_employee";
     }
 
-    @PostMapping("/update")
-    public String updateEmployee(@ModelAttribute("employee") Employee employee) {
-        employeeService.updateEmployee(employee);
-        return "redirect:/employees";
-    }
-
-    @GetMapping("/delete/{id}")
+    @GetMapping("/deleteEmployee/{id}")
     public String deleteEmployee(@PathVariable("id") Long id) {
         employeeService.deleteEmployeeById(id);
-        return "redirect:/employees";
+        return "redirect:/employees/";
     }
 
     @GetMapping("/page/{pageNo}")
-    public String page(@PathVariable("pageNo") int pageNo,
-                       @RequestParam("sortField") String sortField,
-                       @RequestParam("sortDir") String sortDir, Model model) {
+    public String findPaginated(@PathVariable("pageNo") int pageNo,
+                       @RequestParam(value = "sortField", defaultValue = "firstName") String sortField,
+                       @RequestParam(value = "sortDir", defaultValue = "asc") String sortDir, Model model) {
         int pageSize = 8;
         Page<Employee> page = employeeService.findPaginated(pageNo, pageSize, sortField, sortDir);
         List<Employee> employees = page.getContent();
@@ -78,6 +73,6 @@ public class EmployeeController {
 
         model.addAttribute("employees", employees);
         
-        return  "employee-page";
+        return "index";
     }
 }
